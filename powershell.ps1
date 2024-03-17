@@ -27,8 +27,8 @@ foreach($asset in $inventory.GetEnumerator()){
     }
 
     ## SENTINELONE INSTALL
-
     Invoke-Command -ComputerName $asset.Name -ScriptBlock { c:\temp\SentinelOneInstaller.exe -q --dont_fail_on_config_preserving_failures -t $s1SiteToken } -credential $cred
+
     
     ## SENTINELONE VERIFY
     Invoke-Command -ComputerName $asset.Name -ScriptBlock { if (get-service "SentinelOneServices" -ErrorAction SilentlyContinue) {write-host "SentinelOne is now installed."} else {write-host "SentinelOne failed to install"} } -credential $cred
