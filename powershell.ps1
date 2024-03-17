@@ -1,7 +1,7 @@
 $inventory = ( Get-Content .\ps_inventory.txt -Raw | ConvertFrom-StringData )
 $s1SiteToken = "qwertyuiop="
 $cred = get-credential
-$sentinelOneAgent = "test.txt"
+$sentinelOneAgent = "SentinelOne.exe"
 
 foreach($asset in $inventory.GetEnumerator()){
     #UNINSTALL CROWDSTRIKE
@@ -18,16 +18,16 @@ foreach($asset in $inventory.GetEnumerator()){
       New-Item -ItemType Directory -Path \\$($asset.Name)\c$\temp
     }
         
-    Copy-Item -Path c:\agents\test.txt -Destination \\$($asset.Name)\c$\temp\test.txt
+    Copy-Item -Path c:\agents\$sentinelOneAgent -Destination \\$($asset.Name)\c$\temp\$sentinelOneAgent
     
-    if(test-path \\$($asset.Name)\c$\temp\test.txt){
+    if(test-path \\$($asset.Name)\c$\temp\$sentinelOneAgent){
       Write-Host "$($sentinelOneAgent) copied successfully onto host $($asset.Name)"
     } else {
       Write-Host "ERROR - File FAILED to copy to host $($asset.Name)"
     }
 
     ## SENTINELONE INSTALL
-    Invoke-Command -ComputerName $asset.Name -ScriptBlock { c:\temp\SentinelOneInstaller.exe -q --dont_fail_on_config_preserving_failures -t $s1SiteToken } -credential $cred
+    Invoke-Command -ComputerName $asset.Name -ScriptBlock { c:\temp\$sentinelOneAgent -q --dont_fail_on_config_preserving_failures -t $s1SiteToken } -credential $cred
 
     
     ## SENTINELONE VERIFY
