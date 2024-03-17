@@ -1,0 +1,107 @@
+- name: CrowdStrike-Install
+  hosts: myhosts
+
+  become: true
+  ignore_errors: yes
+  vars:
+     crowdstrike:
+        centos8: falcon-sensor-7.11.0-16405.el8.x86_64.rpm
+        centos7: falcon-sensor-7.11.0-16405.el7.x86_64.rpm
+        ubuntu: falcon-sensor_7.11.0-16405_amd64.deb
+     crowdstrikeID: "lkjasdf"
+     agentslocalpath: /opt/agents/
+     remotepath:
+        linux: /tmp/
+
+
+
+  tasks:
+   - set_fact: assetIP={{ ansible_default_ipv4.address }}
+   - set_fact: specificS1Token={{ uninstallToken }} #variable uninstallToken provided in inventory.ini
+    
+    
+
+   #### REMOVE SENTINELONE ####
+
+   ## Linux
+   - name: Remove SentinelOne - Linux
+     shell: "/opt/sentinelone/bin/sentinelctl control uninstall --passphrase {{ specificS1Token }}"
+     when: ansible_facts['distribution'] == "Ubuntu" or ansible_facts['distribution'] == "CentOS"
+     register: sentineloneRemoval
+     
+   - name: Display SentinelOne Removal Status
+     debug: msg="SentinelOne Remvoal Status- {{ sentineloneRemoval.msg }}"
+
+   - name: Check SentinelOne Status
+     shell: systemctl status sentinel
+     register: serviceStatusSystemctl
+   
+   - name: Display SentinelOne Status
+     debug: msg="SentinelOne Status- {{ serviceStatusSystemctl.stderr_lines }}"
+
+
+
+
+   #### INSTALL CROWDSTRIKE ####
+     
+   ## CentOS v7
+   - name: Copy CrowdStrike - CentOSv7
+     ansible.builtin.copy:
+       src: "{{ agentslocalpath }}{{ crowdstrike.centos7 }}"
+       dest: "{{ remotepath.linux }}{{ crowdstrike.centos7 }}"
+     when: 
+       - ansible_facts['distribution'] == "CentOS"
+       - ansible_facts['distribution_major_version'] | int == 7
+       
+   - name: Install CrowdStrike - CentOSv7
+     shell: "yum install {{ remotepath.linux }}{{ crowdstrike.centos7}} -y"
+     when: 
+       - ansible_facts['distribution'] == "CentOS"
+       - ansible_facts['distribution_major_version'] | int == 7
+       
+       
+   ## CentOS v8
+   - name: Copy CrowdStrike - CentOSv8
+     ansible.builtin.copy:
+       src: "{{ agentslocalpath }}{{ crowdstrike.centos8 }}"
+       dest: "{{ remotepath.linux }}{{ crowdstrike.centos8 }}"
+     when: 
+       - ansible_facts['distribution'] == "CentOS"
+       - ansible_facts['distribution_major_version'] | int == 8
+       
+   - name: Install CrowdStrike - CentOSv8
+     shell: "yum install {{ remotepath.linux }}{{ crowdstrike.centos8}} -y"
+     when: 
+       - ansible_facts['distribution'] == "CentOS"
+       - ansible_facts['distribution_major_version'] | int == 8
+   
+
+       
+  ## Ubuntu v14+
+   - name: Copy CrowdStrike Sensor Ubuntu v7.11.0
+     ansible.builtin.copy:
+       src: "{{ agentslocalpath }}{{ crowdstrike.ubuntu }}"
+       dest: "{{ remotepath.linux }}{{ crowdstrike.ubuntu }}"
+     when: 
+       - ansible_facts['distribution'] == "Ubuntu"
+       - ansible_facts['distribution_major_version'] | int >= 14
+       
+       
+   - name: Install CrowdStrike Sensor v7.11.0
+     shell: "apt install {{ remotepath.linux }}{{ crowdstrike.ubuntu }} -y -f"
+     when: 
+       - ansible_facts['distribution'] == "Ubuntu"
+       - ansible_facts['distribution_major_version'] | int >= 14
+       
+
+   ## Linux Activation
+   - name: Initialize CrowdStrike - Linux
+     shell: "/opt/CrowdStrike/falconctl -s --cid={{ crowdstrikeID }}"
+     when: ansible_facts['distribution'] == "Ubuntu" or ansible_facts['distribution'] == "CentOS"
+       
+
+
+   
+
+     
+     
