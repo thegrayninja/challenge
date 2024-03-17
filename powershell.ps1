@@ -1,4 +1,4 @@
-$inventory = ( Get-Content .\inventory.txt -Raw | ConvertFrom-StringData )
+$inventory = ( Get-Content .\ps_inventory.txt -Raw | ConvertFrom-StringData )
 $s1SiteToken = "qwertyuiop="
 $cred = get-credential
 $sentinelOneAgent = "test.txt"
